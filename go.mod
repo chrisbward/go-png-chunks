@@ -1,4 +1,4 @@
-module github.com/chrisbward/go-png-chunks/m
+module github.com/chrisbward/go-png-chunks
 
 go 1.20
 
