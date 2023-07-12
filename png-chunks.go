@@ -50,7 +50,6 @@ func WritetEXtToPngBytes(inputBytes []byte, TEXtChunkToWrite TEXtChunk) (outputB
 
 	pngw, err := pngchunks.NewWriter(&outputBytes)
 	if err != nil {
-		// t.Errorf("NewWriter(): %s", err)
 		return outputBytes, fmt.Errorf("NewWriter(): %s", err)
 	}
 
