@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/murkland/pngchunks"
 )
@@ -18,13 +19,6 @@ var tEXtChunkType = "tEXt"
 var IENDChunkType = "IEND"
 var NULLBYTE = "\x00"
 var tEXtChunkDataSpecification = "%s" + NULLBYTE + "%s"
-
-type Chunk struct {
-	Length int    // chunk data length
-	CType  string // chunk type
-	Data   []byte // chunk data
-	Crc32  []byte // CRC32 of chunk data
-}
 
 type TEXtChunk struct {
 	Key   string
@@ -71,6 +65,11 @@ func WritetEXtToPngBytes(inputBytes []byte, TEXtChunkToWrite TEXtChunk) (outputB
 				if err := pngw.WriteChunk(int32(len(newtEXtChunk)), tEXtChunkType, bytes.NewBuffer(newtEXtChunk)); err != nil {
 					return outputBytes, fmt.Errorf("WriteChunk(): %s", err)
 				}
+
+				newComment := []byte("encodedwith\x00github.com/chrisbward/go-png-chunks")
+				if err := pngw.WriteChunk(int32(len(newComment)), chunk.Type(), bytes.NewBuffer(newComment)); err != nil {
+					return outputBytes, fmt.Errorf("WriteChunk(): %s", err)
+				}
 				// Now we end the buffer with IENDChunkType chunk
 				if err := pngw.WriteChunk(chunk.Length(), chunk.Type(), chunk); err != nil {
 					return outputBytes, fmt.Errorf("WriteChunk(): %s", err)
@@ -85,11 +84,6 @@ func WritetEXtToPngBytes(inputBytes []byte, TEXtChunkToWrite TEXtChunk) (outputB
 			if _, err := io.Copy(ioutil.Discard, chunk); err != nil {
 				return outputBytes, fmt.Errorf("io.Copy(ioutil.Discard, chunk): %s", err)
 			}
-
-			newComment := []byte("comment\x00hi everyone!")
-			if err := pngw.WriteChunk(int32(len(newComment)), chunk.Type(), bytes.NewBuffer(newComment)); err != nil {
-				return outputBytes, fmt.Errorf("WriteChunk(): %s", err)
-			}
 		}
 
 		if err := chunk.Close(); err != nil {
@@ -97,4 +91,46 @@ func WritetEXtToPngBytes(inputBytes []byte, TEXtChunkToWrite TEXtChunk) (outputB
 		}
 	}
 	return outputBytes, nil
+}
+
+func GetAlltEXtChunks(inputBytes []byte) (textChunks []TEXtChunk, err error) {
+
+	reader := bytes.NewReader(inputBytes)
+	pngr, err := pngchunks.NewReader(reader)
+	if err != nil {
+		// t.Errorf("NewReader(): %s", err)
+		return textChunks, fmt.Errorf("pngchunks.NewReader(): %s", err)
+	}
+
+	for {
+		chunk, err := pngr.NextChunk()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+		}
+
+		if chunk.Type() != tEXtChunkType {
+			if _, err := io.Copy(ioutil.Discard, chunk); err != nil {
+				// t.Errorf("io.Copy(): %s", err)
+				return textChunks, fmt.Errorf("io.Copy(): %s", err)
+			}
+		} else {
+			buf, err := ioutil.ReadAll(chunk)
+			if err != nil {
+				return textChunks, fmt.Errorf("ioutil.ReadAll(): %s", err)
+			}
+			dataInChunk := string(buf)
+			values := strings.Split(dataInChunk, "\x00")
+			if len(values) == 2 {
+				textChunks = append(textChunks, TEXtChunk{Key: values[0], Value: values[1]})
+			}
+		}
+
+		if err := chunk.Close(); err != nil {
+			return textChunks, fmt.Errorf("chunk.Close(): %s", err)
+		}
+	}
+
+	return textChunks, nil
 }
