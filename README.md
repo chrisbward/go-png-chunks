@@ -4,7 +4,7 @@ Library/Utility to manage tEXt chunks inside PNG files
 ## Example for reading all tEXt chunks from file
 
 ```go
-func ReadtEXtChunksFromFile(inputFilePath string) []TEXtChunk {
+func ReadtEXtChunksFromFile(inputFilePath string) []gopngchunks.TEXtChunk {
 	f, err := os.Open(inputFilePath)
 	if err != nil {
 		return fmt.Errorf("os.Open(): %s", err)
