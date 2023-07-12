@@ -4,29 +4,43 @@ Library/Utility to manage tEXt chunks inside PNG files
 ## Example for reading all tEXt chunks from file
 
 ```go
-func ReadtEXtChunksFromFile(inputFilePath string) []gopngchunks.TEXtChunk {
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	gopngchunks "github.com/chrisbward/go-png-chunks"
+)
+
+func ReadtEXtChunksFromFile(inputFilePath string) (tEXtChunks []gopngchunks.TEXtChunk, err error) {
 	f, err := os.Open(inputFilePath)
 	if err != nil {
-		return fmt.Errorf("os.Open(): %s", err)
+		return tEXtChunks, fmt.Errorf("os.Open(): %s", err)
 	}
 	defer f.Close()
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadAll(): %s", err)
+		return tEXtChunks, fmt.Errorf("ioutil.ReadAll(): %s", err)
 	}
-	tEXtChunks, err := gopngchunks.GetAlltEXtChunks(data)
+	tEXtChunks, err = gopngchunks.GetAlltEXtChunks(data)
 	if err != nil {
 		panic(err)
-	} 
-    return tEXtChunks
+	}
+	return tEXtChunks, nil
 }
+
 
 ```
 
 
 ## Example for writing to PNG
 ```go
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
 
+	gopngchunks "github.com/chrisbward/go-png-chunks"
+)
 var helloWorld = "aGVsbG8gd29ybGQ="
 
 func WritetEXtChunkToFile(inputFilePath string, outputFilePath string) error {
