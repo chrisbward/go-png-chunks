@@ -3,6 +3,11 @@ Library/Utility to manage tEXt chunks inside PNG files
 
 
 ```go
+package main
+
+import (
+    gopngchunks "github.com/chrisbward/go-png-chunks"
+)
 
 var helloWorld = "aGVsbG8gd29ybGQ="
 
@@ -17,11 +22,11 @@ func WritetEXtChunkToFile(inputFilePath string, outputFilePath string) error {
 	if err != nil {
 		return fmt.Errorf("ioutil.ReadAll(): %s", err)
 	}
-	tEXtChunkToWrite := TEXtChunk{
+	tEXtChunkToWrite := gopngchunks.TEXtChunk{
 		Key:   "helloworld",
 		Value: helloWorld,
 	}
-	w, err := TestWritePNG(data, tEXtChunkToWrite)
+	w, err := gopngchunks.WritetEXtToPngBytes(data, tEXtChunkToWrite)
 	if err != nil {
 		panic(err)
 	}
@@ -34,6 +39,11 @@ func WritetEXtChunkToFile(inputFilePath string, outputFilePath string) error {
 	out.Write(w.Bytes())
 
 	return nil
+}
+
+
+func main(){
+    WritetEXtChunkToFile("./in.png", "./out.png")
 }
 
 ```
